@@ -25,7 +25,7 @@ const defaultServePort = "11435"
 
 func NewApp() *App {
 	return &App{
-		serveURL: "http://localhost:" + defaultServePort,
+		serveURL: "http://127.0.0.1:" + defaultServePort,
 	}
 }
 
