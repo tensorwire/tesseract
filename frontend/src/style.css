@@ -26,9 +26,10 @@ html, body {
 }
 
 #dragbar {
-    height: 28px;
+    height: 36px;
     -webkit-app-region: drag;
     flex-shrink: 0;
+    cursor: grab;
 }
 
 #header {
