@@ -1,9 +1,9 @@
 #import <Cocoa/Cocoa.h>
 
-extern void goTrayShow();
-extern void goTrayQuit();
+extern void goTrayShow(void);
+extern void goTrayQuit(void);
 
-static NSStatusItem *statusItem = nil;
+static NSStatusItem * statusItem = nil;
 
 @interface TrayDelegate : NSObject
 - (void)showWindow:(id)sender;
@@ -18,40 +18,59 @@ static NSStatusItem *statusItem = nil;
 static TrayDelegate *trayDelegate = nil;
 
 void TrayCreate(const void *iconData, int iconLen) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSStatusBar *bar = [NSStatusBar systemStatusBar];
-        statusItem = [bar statusItemWithLength:NSSquareStatusItemLength];
+    if (![NSThread isMainThread]) {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            TrayCreate(iconData, iconLen);
+        });
+        return;
+    }
 
-        NSData *data = [NSData dataWithBytes:iconData length:iconLen];
-        NSImage *icon = [[NSImage alloc] initWithData:data];
+    NSLog(@"[tesseract] creating tray on main thread");
+
+    statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
+    [statusItem retain];
+
+    NSStatusBarButton *button = statusItem.button;
+    if (!button) {
+        NSLog(@"[tesseract] ERROR: statusItem.button is nil");
+        return;
+    }
+
+    NSData *data = [NSData dataWithBytes:iconData length:iconLen];
+    NSImage *icon = [[NSImage alloc] initWithData:data];
+    if (icon) {
         [icon setSize:NSMakeSize(18, 18)];
         [icon setTemplate:YES];
-        statusItem.button.image = icon;
+        button.image = icon;
+    } else {
+        button.title = @"T";
+    }
 
-        trayDelegate = [[TrayDelegate alloc] init];
-        NSMenu *menu = [[NSMenu alloc] init];
+    trayDelegate = [[TrayDelegate alloc] init];
+    NSMenu *menu = [[NSMenu alloc] init];
 
-        NSMenuItem *showItem = [[NSMenuItem alloc] initWithTitle:@"Show Tesseract"
-            action:@selector(showWindow:) keyEquivalent:@""];
-        [showItem setTarget:trayDelegate];
-        [menu addItem:showItem];
+    NSMenuItem *showItem = [[NSMenuItem alloc] initWithTitle:@"Show Tesseract"
+        action:@selector(showWindow:) keyEquivalent:@""];
+    [showItem setTarget:trayDelegate];
+    [menu addItem:showItem];
 
-        [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit"
-            action:@selector(quitApp:) keyEquivalent:@"q"];
-        [quitItem setTarget:trayDelegate];
-        [menu addItem:quitItem];
+    NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit"
+        action:@selector(quitApp:) keyEquivalent:@"q"];
+    [quitItem setTarget:trayDelegate];
+    [menu addItem:quitItem];
 
-        statusItem.menu = menu;
-    });
+    statusItem.menu = menu;
+
+    NSLog(@"[tesseract] tray created: button=%p menu=%p visible=%d",
+          button, menu, statusItem.visible);
 }
 
-void TrayRemove() {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (statusItem) {
-            [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
-            statusItem = nil;
-        }
-    });
+void TrayRemove(void) {
+    if (statusItem) {
+        [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
+        [statusItem release];
+        statusItem = nil;
+    }
 }
