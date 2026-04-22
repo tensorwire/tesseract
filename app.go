@@ -21,9 +21,11 @@ type App struct {
 	servePID int
 }
 
+const defaultServePort = "11435"
+
 func NewApp() *App {
 	return &App{
-		serveURL: "http://localhost:11434",
+		serveURL: "http://localhost:" + defaultServePort,
 	}
 }
 
@@ -47,7 +49,7 @@ func (a *App) ensureServe() {
 		return
 	}
 
-	cmd := exec.Command(exe, "serve", "--daemon", "--port", "11434")
+	cmd := exec.Command(exe, "serve", "--daemon", "--port", defaultServePort)
 	cmd.Start()
 
 	for i := 0; i < 20; i++ {
@@ -168,7 +170,7 @@ func (a *App) LoadModel(name string) error {
 	a.stopServe()
 	time.Sleep(500 * time.Millisecond)
 
-	cmd := exec.Command(exe, "serve", fmt.Sprintf("model=%s", name), "--daemon", "--port", "11434")
+	cmd := exec.Command(exe, "serve", fmt.Sprintf("model=%s", name), "--daemon", "--port", defaultServePort)
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -183,8 +185,14 @@ func (a *App) LoadModel(name string) error {
 }
 
 func (a *App) SendMessage(message string) string {
+	status := a.GetStatus()
+	model := status.Model
+	if model == "" {
+		return "[no model loaded — select a model first]"
+	}
+
 	body := map[string]interface{}{
-		"model": "",
+		"model": model,
 		"messages": []map[string]string{
 			{"role": "user", "content": message},
 		},
