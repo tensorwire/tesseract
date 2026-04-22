@@ -187,13 +187,16 @@ func (a *App) LoadModel(name string) error {
 func (a *App) SendMessage(message string) string {
 	body := map[string]interface{}{
 		"messages": []map[string]string{
+			{"role": "system", "content": "You are a helpful assistant. Answer concisely."},
 			{"role": "user", "content": message},
 		},
-		"stream": false,
+		"max_tokens": 200,
+		"stream":     false,
 	}
 	jsonBody, _ := json.Marshal(body)
 
-	resp, err := http.Post(a.serveURL+"/v1/chat/completions", "application/json", bytes.NewReader(jsonBody))
+	client := &http.Client{Timeout: 120 * time.Second}
+	resp, err := client.Post(a.serveURL+"/v1/chat/completions", "application/json", bytes.NewReader(jsonBody))
 	if err != nil {
 		return fmt.Sprintf("[error: %v]", err)
 	}
