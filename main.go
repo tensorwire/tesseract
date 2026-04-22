@@ -12,8 +12,13 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed icon.png
+var iconPNG []byte
+
 func main() {
 	app := NewApp()
+
+	go app.runTray()
 
 	err := wails.Run(&options.App{
 		Title:            "Tesseract",
@@ -25,6 +30,7 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 10, G: 10, B: 15, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
+		HideWindowOnClose: true,
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{

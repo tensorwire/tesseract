@@ -13,6 +13,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"fyne.io/systray"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -35,6 +38,34 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	systray.Quit()
+}
+
+func (a *App) runTray() {
+	systray.Run(func() {
+		systray.SetIcon(iconPNG)
+		systray.SetTooltip("Tesseract")
+		mShow := systray.AddMenuItem("Show", "Show Tesseract")
+		systray.AddSeparator()
+		mQuit := systray.AddMenuItem("Quit", "Quit Tesseract")
+
+		go func() {
+			for {
+				select {
+				case <-mShow.ClickedCh:
+					if a.ctx != nil {
+						wailsRuntime.WindowShow(a.ctx)
+					}
+				case <-mQuit.ClickedCh:
+					if a.ctx != nil {
+						wailsRuntime.Quit(a.ctx)
+					}
+					systray.Quit()
+					return
+				}
+			}
+		}()
+	}, func() {})
 }
 
 // ensureServe checks if ai serve is already running. Only starts a new one
