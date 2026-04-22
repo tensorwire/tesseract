@@ -12,6 +12,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed icon.png
+var iconPNG []byte
+
 func main() {
 	app := NewApp()
 

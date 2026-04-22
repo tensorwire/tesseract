@@ -33,9 +33,11 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.ensureServe()
+	setupTray(a, iconPNG)
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	teardownTray()
 }
 
 // ensureServe checks if ai serve is already running. Only starts a new one
