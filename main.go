@@ -25,8 +25,8 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 10, G: 10, B: 15, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
-		Frameless: true,
 		Mac: &mac.Options{
+			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
 				Title:   "Tesseract",
 				Message: "GPU-accelerated LLM desktop app\nPowered by mongoose",
