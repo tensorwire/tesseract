@@ -25,13 +25,18 @@ html, body {
     flex-direction: column;
 }
 
+#dragbar {
+    height: 28px;
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+}
+
 #header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px 12px 80px;
+    padding: 4px 20px 12px 20px;
     border-bottom: 1px solid var(--border);
-    -webkit-app-region: drag;
 }
 
 #status {
