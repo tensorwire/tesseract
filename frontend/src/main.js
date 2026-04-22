@@ -7,8 +7,101 @@ const sendBtn = document.getElementById('send');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const modelSelect = document.getElementById('model-select');
+const cmdPalette = document.getElementById('cmd-palette');
+const hintEl = document.getElementById('hint');
 
 let sending = false;
+let paletteIndex = -1;
+
+const commands = [
+    { cmd: '/help', desc: 'Show all commands' },
+    { cmd: '/pull', desc: 'Download model from HuggingFace', arg: '<org/model>' },
+    { cmd: '/models', desc: 'List downloaded models' },
+    { cmd: '/load', desc: 'Load model into server', arg: '<model>' },
+    { cmd: '/info', desc: 'Show model architecture', arg: '<model>' },
+    { cmd: '/status', desc: 'Show server status' },
+    { cmd: '/gpus', desc: 'Detect hardware' },
+    { cmd: '/bench', desc: 'GPU benchmark' },
+    { cmd: '/quantize', desc: 'Quantize model', arg: '<model> [q8|q4]' },
+    { cmd: '/train', desc: 'Train a model', arg: 'data=<file>' },
+    { cmd: '/stop', desc: 'Stop server daemon' },
+];
+
+function showPalette(filter) {
+    const matches = commands.filter(c =>
+        c.cmd.startsWith(filter) || filter === '/'
+    );
+    if (matches.length === 0) {
+        hidePalette();
+        return;
+    }
+    paletteIndex = -1;
+    cmdPalette.innerHTML = matches.map((c, i) => {
+        const arg = c.arg ? ` <span class="cmd-arg">${c.arg}</span>` : '';
+        return `<div class="cmd-item" data-cmd="${c.cmd}" data-index="${i}">
+            <span class="cmd-name">${c.cmd}</span>${arg}
+            <span class="cmd-desc">${c.desc}</span>
+        </div>`;
+    }).join('');
+    cmdPalette.style.display = 'block';
+    hintEl.style.display = 'none';
+
+    cmdPalette.querySelectorAll('.cmd-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const cmd = item.dataset.cmd;
+            inputEl.value = cmd + ' ';
+            inputEl.focus();
+            hidePalette();
+        });
+    });
+}
+
+function hidePalette() {
+    cmdPalette.style.display = 'none';
+    cmdPalette.innerHTML = '';
+    paletteIndex = -1;
+}
+
+function navigatePalette(dir) {
+    const items = cmdPalette.querySelectorAll('.cmd-item');
+    if (items.length === 0) return;
+    items.forEach(i => i.classList.remove('active'));
+    paletteIndex += dir;
+    if (paletteIndex < 0) paletteIndex = items.length - 1;
+    if (paletteIndex >= items.length) paletteIndex = 0;
+    items[paletteIndex].classList.add('active');
+    items[paletteIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function selectPaletteItem() {
+    const items = cmdPalette.querySelectorAll('.cmd-item');
+    if (paletteIndex >= 0 && paletteIndex < items.length) {
+        const cmd = items[paletteIndex].dataset.cmd;
+        inputEl.value = cmd + ' ';
+        inputEl.focus();
+        hidePalette();
+        return true;
+    }
+    return false;
+}
+
+inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+
+    const val = inputEl.value;
+    if (val.startsWith('/') && !val.includes('\n')) {
+        showPalette(val.split(' ')[0]);
+    } else {
+        hidePalette();
+    }
+
+    if (val.length === 0) {
+        hintEl.style.display = '';
+    } else {
+        hintEl.style.display = 'none';
+    }
+});
 
 async function refreshStatus() {
     try {
@@ -147,15 +240,31 @@ async function send() {
 
 sendBtn.addEventListener('click', send);
 inputEl.addEventListener('keydown', (e) => {
+    const paletteVisible = cmdPalette.style.display === 'block';
+
+    if (paletteVisible && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        navigatePalette(e.key === 'ArrowDown' ? 1 : -1);
+        return;
+    }
+    if (paletteVisible && (e.key === 'Tab' || (e.key === 'Enter' && paletteIndex >= 0))) {
+        e.preventDefault();
+        selectPaletteItem();
+        return;
+    }
+    if (e.key === 'Escape') {
+        hidePalette();
+        return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        hidePalette();
         send();
     }
 });
 
-inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+inputEl.addEventListener('blur', () => {
+    setTimeout(hidePalette, 150);
 });
 
 refreshStatus();
