@@ -185,14 +185,7 @@ func (a *App) LoadModel(name string) error {
 }
 
 func (a *App) SendMessage(message string) string {
-	status := a.GetStatus()
-	model := status.Model
-	if model == "" {
-		return "[no model loaded — select a model first]"
-	}
-
 	body := map[string]interface{}{
-		"model": model,
 		"messages": []map[string]string{
 			{"role": "user", "content": message},
 		},

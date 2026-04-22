@@ -30,13 +30,16 @@ async function refreshStatus() {
 
 async function refreshModels() {
     try {
-        const models = await ListModels();
+        const [models, status] = await Promise.all([ListModels(), GetStatus()]);
         modelSelect.innerHTML = '<option value="">select model</option>';
         if (models) {
             for (const m of models) {
                 const opt = document.createElement('option');
                 opt.value = m;
                 opt.textContent = m;
+                if (status.model && m === status.model) {
+                    opt.selected = true;
+                }
                 modelSelect.appendChild(opt);
             }
         }
