@@ -1,5 +1,5 @@
 import './style.css';
-import {GetStatus, ListModels, LoadModel, SendMessage} from '../wailsjs/go/main/App';
+import {GetStatus, ListModels, LoadModel, SendMessage, RunCommand, PullModelWithProgress, CancelPull} from '../wailsjs/go/main/App';
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('input');
@@ -77,6 +77,55 @@ async function send() {
     sendBtn.disabled = true;
     inputEl.value = '';
     inputEl.style.height = 'auto';
+
+    // Slash commands
+    if (text.startsWith('/')) {
+        addMessage('user', text);
+        const cmdText = text.slice(1);
+
+        // Pull gets a progress indicator with cancel
+        if (cmdText.startsWith('pull ')) {
+            const modelName = cmdText.slice(5).trim();
+            const progressEl = addMessage('system', '');
+            const bar = document.createElement('div');
+            bar.className = 'pull-progress';
+            bar.innerHTML = `
+                <span class="pull-text">downloading ${modelName}...</span>
+                <button class="pull-cancel" title="Cancel">✕</button>
+            `;
+            progressEl.textContent = '';
+            progressEl.appendChild(bar);
+            bar.querySelector('.pull-cancel').addEventListener('click', async () => {
+                const result = await CancelPull();
+                progressEl.textContent = result;
+            });
+            try {
+                const result = await PullModelWithProgress(modelName);
+                progressEl.textContent = result;
+                await refreshModels();
+                await refreshStatus();
+            } catch (err) {
+                progressEl.textContent = `[error: ${err}]`;
+            }
+        } else {
+            const resultEl = addMessage('system', 'running...');
+            try {
+                const result = await RunCommand(cmdText);
+                resultEl.textContent = result;
+                if (cmdText === 'models' || cmdText.startsWith('load ')) {
+                    await refreshModels();
+                    await refreshStatus();
+                }
+            } catch (err) {
+                resultEl.textContent = `[error: ${err}]`;
+            }
+        }
+
+        sending = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+        return;
+    }
 
     addMessage('user', text);
     const thinkingEl = addMessage('assistant', 'thinking...');

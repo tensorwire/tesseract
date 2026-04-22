@@ -20,6 +20,7 @@ type App struct {
 	ctx      context.Context
 	serveURL string
 	servePID int
+	pullCmd  *exec.Cmd
 }
 
 const defaultServePort = "11435"
@@ -212,14 +213,143 @@ func (a *App) SendMessage(message string) string {
 }
 
 func (a *App) PullModel(name string) string {
+	return a.RunCommand("pull " + name)
+}
+
+func (a *App) RunCommand(input string) string {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return a.commandHelp()
+	}
+
+	cmd := parts[0]
+	args := parts[1:]
+
+	switch cmd {
+	case "help":
+		return a.commandHelp()
+	case "pull":
+		if len(args) == 0 {
+			return "usage: /pull <org/model>"
+		}
+		return a.runAI("pull", args...)
+	case "models":
+		return a.runAI("models")
+	case "info":
+		if len(args) == 0 {
+			return "usage: /info <model>"
+		}
+		return a.runAI("info", args[0])
+	case "load":
+		if len(args) == 0 {
+			return "usage: /load <model>"
+		}
+		if err := a.LoadModel(args[0]); err != nil {
+			return fmt.Sprintf("error: %v", err)
+		}
+		return fmt.Sprintf("loaded %s", args[0])
+	case "gpus":
+		return a.runAI("gpus")
+	case "bench":
+		return a.runAI("bench")
+	case "quantize":
+		if len(args) < 1 {
+			return "usage: /quantize <model> [q8|q4|f16]"
+		}
+		return a.runAI("quantize", args...)
+	case "train":
+		if len(args) < 1 {
+			return "usage: /train data=<file> [dim=N] [steps=N]"
+		}
+		return a.runAI("train", args...)
+	case "serve":
+		return a.runAI("serve", args...)
+	case "status":
+		s := a.GetStatus()
+		if !s.Running {
+			return "serve: not running"
+		}
+		gpu := ""
+		if s.GPU {
+			gpu = " (GPU)"
+		}
+		return fmt.Sprintf("serve: %s%s\n%s", s.Model, gpu, s.Version)
+	case "stop":
+		a.stopServe()
+		return "serve stopped"
+	default:
+		return fmt.Sprintf("unknown command: /%s\n\n%s", cmd, a.commandHelp())
+	}
+}
+
+func (a *App) PullModelWithProgress(name string) string {
 	exe := a.findAI()
 	if exe == "" {
-		return "ai binary not found"
+		return "error: ai binary not found"
 	}
-	cmd := exec.Command(exe, "pull", name)
+
+	a.pullCmd = exec.Command(exe, "pull", name)
+	stdout, err := a.pullCmd.StdoutPipe()
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	a.pullCmd.Stderr = a.pullCmd.Stdout
+
+	if err := a.pullCmd.Start(); err != nil {
+		a.pullCmd = nil
+		return fmt.Sprintf("error: %v", err)
+	}
+
+	var output strings.Builder
+	buf := make([]byte, 256)
+	for {
+		n, err := stdout.Read(buf)
+		if n > 0 {
+			output.Write(buf[:n])
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	a.pullCmd.Wait()
+	a.pullCmd = nil
+	return strings.TrimSpace(output.String())
+}
+
+func (a *App) CancelPull() string {
+	if a.pullCmd != nil && a.pullCmd.Process != nil {
+		a.pullCmd.Process.Kill()
+		a.pullCmd = nil
+		return "download cancelled"
+	}
+	return "no download in progress"
+}
+
+func (a *App) commandHelp() string {
+	return `/help                Show this help
+/pull <org/model>    Download model from HuggingFace
+/models              List downloaded models
+/info <model>        Show model architecture
+/load <model>        Load model into serve
+/status              Show serve status
+/stop                Stop serve daemon
+/gpus                Detect hardware
+/bench               GPU benchmark
+/quantize <model>    Quantize model
+/train data=<file>   Train a model`
+}
+
+func (a *App) runAI(command string, args ...string) string {
+	exe := a.findAI()
+	if exe == "" {
+		return "ai binary not found — install with: brew install open-ai-org/tap/ai"
+	}
+	allArgs := append([]string{command}, args...)
+	cmd := exec.Command(exe, allArgs...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Sprintf("error: %v\n%s", err, string(out))
+		return fmt.Sprintf("%s\nerror: %v", string(out), err)
 	}
-	return string(out)
+	return strings.TrimSpace(string(out))
 }

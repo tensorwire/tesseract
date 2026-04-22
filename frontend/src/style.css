@@ -102,6 +102,15 @@ html, body {
     border: 1px solid var(--border);
 }
 
+.message.system {
+    align-self: stretch;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+}
+
 .message.thinking {
     color: var(--dim);
     font-style: italic;
@@ -144,6 +153,31 @@ html, body {
 }
 #send:hover { opacity: 0.8; }
 #send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pull-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pull-text {
+    flex: 1;
+}
+
+.pull-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--dim);
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+.pull-cancel:hover {
+    border-color: #ff4444;
+    color: #ff4444;
+}
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
