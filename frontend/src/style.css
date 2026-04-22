@@ -29,7 +29,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 12px 20px 12px 80px;
     border-bottom: 1px solid var(--border);
     -webkit-app-region: drag;
 }
