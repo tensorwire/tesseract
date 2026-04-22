@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +34,7 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.ensureAI()
 	a.ensureServe()
 	go func() {
 		time.Sleep(3 * time.Second)
@@ -78,15 +80,28 @@ func (a *App) isServeRunning() bool {
 }
 
 func (a *App) findAI() string {
+	// Check our own install dir first
+	ext := ""
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
+	ours := filepath.Join(installDir(), "ai"+ext)
+	if _, err := os.Stat(ours); err == nil {
+		return ours
+	}
+
+	// Then PATH
+	if p, err := exec.LookPath("ai"); err == nil {
+		return p
+	}
+
+	// Common locations
 	candidates := []string{
 		"/opt/homebrew/bin/ai",
 		"/usr/local/bin/ai",
 	}
 	home, _ := os.UserHomeDir()
-	candidates = append(candidates, filepath.Join(home, "go", "bin", "ai"))
-	if p, err := exec.LookPath("ai"); err == nil {
-		return p
-	}
+	candidates = append(candidates, filepath.Join(home, "go", "bin", "ai"+ext))
 	for _, c := range candidates {
 		if _, err := os.Stat(c); err == nil {
 			return c
@@ -101,6 +116,19 @@ func (a *App) pidPath() string {
 }
 
 // --- Exposed to frontend ---
+
+func (a *App) GetSetupStatus() string {
+	exe := a.findAI()
+	if exe == "" {
+		return "not installed"
+	}
+	cmd := exec.Command(exe, "--version")
+	out, err := cmd.Output()
+	if err != nil {
+		return "installed (unknown version)"
+	}
+	return strings.TrimSpace(string(out))
+}
 
 type ServerStatus struct {
 	Running bool   `json:"running"`

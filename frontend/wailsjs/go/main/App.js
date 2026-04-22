@@ -6,6 +6,10 @@ export function CancelPull() {
   return window['go']['main']['App']['CancelPull']();
 }
 
+export function GetSetupStatus() {
+  return window['go']['main']['App']['GetSetupStatus']();
+}
+
 export function GetStatus() {
   return window['go']['main']['App']['GetStatus']();
 }

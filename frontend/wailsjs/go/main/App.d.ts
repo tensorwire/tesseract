@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function CancelPull():Promise<string>;
 
+export function GetSetupStatus():Promise<string>;
+
 export function GetStatus():Promise<main.ServerStatus>;
 
 export function ListModels():Promise<Array<string>>;
