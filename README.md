@@ -1,19 +1,67 @@
-# README
+# Tesseract
 
-## About
+GPU-accelerated LLM desktop app. Chat, train, and serve models locally. Zero cloud, zero Python.
 
-This is the official Wails Vanilla template.
+Powered by the [ai](https://github.com/open-ai-org/ai) CLI and [mongoose](https://github.com/open-ai-org/mongoose) GPU engine.
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+## Install
 
-## Live Development
+Download from [Releases](https://github.com/open-ai-org/tesseract/releases):
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+- **macOS**: `Tesseract.app` (Apple Silicon + Intel)
+- **Linux**: `tesseract-linux-amd64`
+- **Windows**: `tesseract-windows-amd64.exe`
 
-## Building
+Or build from source:
 
-To build a redistributable, production mode package, use `wails build`.
+```bash
+wails build
+```
+
+## Features
+
+- **Chat** with any downloaded model
+- **Slash commands** — type `/` for the command palette:
+  - `/pull <org/model>` — download from HuggingFace
+  - `/models` — list downloaded models
+  - `/load <model>` — switch active model
+  - `/train data=<file>` — train from scratch
+  - `/gpus` — detect hardware
+  - `/status` — server status
+  - `/help` — all commands
+- **System tray** — minimize to menu bar (macOS)
+- **Auto-setup** — downloads the `ai` binary on first launch if not installed
+- **GPU auto-detect** — Metal on macOS, CUDA on Linux, Vulkan/WebGPU everywhere else
+
+## Architecture
+
+```
+Tesseract (Wails app)
+  └── ai serve --daemon (inference server)
+        └── mongoose (GPU compute engine)
+              └── Metal / CUDA / Vulkan / CPU
+```
+
+The desktop app manages an `ai serve` daemon process that runs the OpenAI-compatible inference API on `localhost:11435`. The frontend talks to the Go backend via Wails bindings, which proxies to the serve API.
+
+## Requirements
+
+- macOS 13+ (Metal) / Linux (CUDA or Vulkan) / Windows (Vulkan)
+- No Go, Python, or CUDA toolkit needed — the app downloads everything on first run
+
+## Development
+
+```bash
+# Live development with hot reload
+wails dev
+
+# Production build
+wails build
+
+# Generate Go → JS bindings
+wails generate module
+```
+
+## License
+
+MIT
