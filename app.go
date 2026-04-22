@@ -38,25 +38,11 @@ func (a *App) shutdown(ctx context.Context) {
 	a.stopServe()
 }
 
-// ensureServe starts ai serve --daemon if not already running.
+// ensureServe checks if ai serve is already running. Only starts a new one
+// if nothing is listening on the port.
 func (a *App) ensureServe() {
 	if a.isServeRunning() {
 		return
-	}
-
-	exe := a.findAI()
-	if exe == "" {
-		return
-	}
-
-	cmd := exec.Command(exe, "serve", "--daemon", "--port", defaultServePort)
-	cmd.Start()
-
-	for i := 0; i < 20; i++ {
-		time.Sleep(500 * time.Millisecond)
-		if a.isServeRunning() {
-			break
-		}
 	}
 }
 
