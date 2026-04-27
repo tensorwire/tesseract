@@ -1,5 +1,7 @@
 # Tesseract
 
+> **This project has moved to [github.com/tensorwire/tesseract](https://github.com/tensorwire/tesseract).** Updates will be published under [github.com/tensorwire](https://github.com/tensorwire). Code remaining in open-ai-org is unmaintained.
+
 GPU-accelerated LLM desktop app. Chat, train, and serve models locally. Zero cloud, zero Python.
 
 Powered by the [ai](https://github.com/open-ai-org/ai) CLI and [mongoose](https://github.com/open-ai-org/mongoose) GPU engine.
