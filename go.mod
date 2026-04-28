@@ -1,4 +1,4 @@
-module github.com/open-ai-org/tesseract
+module github.com/tensorwire/tesseract
 
 go 1.23.0
 

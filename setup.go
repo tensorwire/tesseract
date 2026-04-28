@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	aiRepo       = "open-ai-org/ai"
+	aiRepo       = "tensorwire/ai"
 	aiReleaseAPI = "https://api.github.com/repos/" + aiRepo + "/releases/latest"
 )
 

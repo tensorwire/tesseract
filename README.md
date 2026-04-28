@@ -1,14 +1,12 @@
 # Tesseract
 
-> **This project has moved to [github.com/tensorwire/tesseract](https://github.com/tensorwire/tesseract).** Updates will be published under [github.com/tensorwire](https://github.com/tensorwire). Code remaining in open-ai-org is unmaintained.
-
 GPU-accelerated LLM desktop app. Chat, train, and serve models locally. Zero cloud, zero Python.
 
-Powered by the [ai](https://github.com/open-ai-org/ai) CLI and [mongoose](https://github.com/open-ai-org/mongoose) GPU engine.
+Powered by the [ai](https://github.com/tensorwire/ai) CLI and [mongoose](https://github.com/tensorwire/mongoose) GPU engine.
 
 ## Install
 
-Download from [Releases](https://github.com/open-ai-org/tesseract/releases):
+Download from [Releases](https://github.com/tensorwire/tesseract/releases):
 
 - **macOS**: `Tesseract.app` (Apple Silicon + Intel)
 - **Linux**: `tesseract-linux-amd64`

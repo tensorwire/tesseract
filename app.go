@@ -371,7 +371,7 @@ func (a *App) commandHelp() string {
 func (a *App) runAI(command string, args ...string) string {
 	exe := a.findAI()
 	if exe == "" {
-		return "ai binary not found — install with: brew install open-ai-org/tap/ai"
+		return "ai binary not found — install with: brew install tensorwire/tap/ai"
 	}
 	allArgs := append([]string{command}, args...)
 	cmd := exec.Command(exe, allArgs...)
